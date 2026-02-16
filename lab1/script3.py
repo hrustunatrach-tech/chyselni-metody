@@ -68,7 +68,7 @@ def build_cubic_spline(x, y):
 
 
 
-
+print("ПУНКТ МАЙЖЕ ОСТАННІЙ")
 print("ПУНКТ ОСТАННІЙ")
 
 
