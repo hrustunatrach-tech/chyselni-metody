@@ -68,11 +68,6 @@ def build_cubic_spline(x, y):
 
 
 
-print("ПУНКТ МАЙЖЕ ОСТАННІЙ")
-print("ПУНКТ ОСТАННІЙ")
-
-
-
 def main():
     results = get_elevation_data()
     if not results: return
