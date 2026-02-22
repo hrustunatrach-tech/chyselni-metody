@@ -3,7 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+# ==========================================
+# ЕТАП 1-4: Отримання та підготовка даних
+# ==========================================
+
 def get_elevation_data():
+    """Отримання даних про висоту через Open-Elevation API"""
     locations = (
         "48.164214,24.536044|48.164983,24.534836|48.165605,24.534068|48.166228,24.532915|"
         "48.166777,24.531927|48.167326,24.530884|48.167011,24.530061|48.166053,24.528039|"
@@ -20,7 +25,9 @@ def get_elevation_data():
         print(f"Помилка API: {e}")
         return None
 
+
 def haversine(lat1, lon1, lat2, lon2):
+    """Обчислення відстані між точками на сфері (в метрах)"""
     R = 6371000
     phi1, phi2 = np.radians(lat1), np.radians(lat2)
     dphi = np.radians(lat2 - lat1)
@@ -29,15 +36,20 @@ def haversine(lat1, lon1, lat2, lon2):
     return 2 * R * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
 
 
+# ==========================================
+# ЕТАП 6-9: Кубічні сплайни та метод прогонки
+# ==========================================
+
 def build_cubic_spline(x, y):
+    """Побудова кубічного сплайна методом прогонки"""
     n = len(x) - 1
     h = np.diff(x)
 
+    # Коефіцієнти системи
     alpha = np.zeros(n + 1)
     beta = np.ones(n + 1)
     gamma = np.zeros(n + 1)
     delta = np.zeros(n + 1)
-
 
     for i in range(1, n):
         alpha[i] = h[i - 1]
@@ -45,7 +57,7 @@ def build_cubic_spline(x, y):
         gamma[i] = h[i]
         delta[i] = 3 * ((y[i + 1] - y[i]) / h[i] - (y[i] - y[i - 1]) / h[i - 1])
 
-
+    # Пряма прогонка
     A = np.zeros(n + 1)
     B = np.zeros(n + 1)
     for i in range(1, n + 1):
@@ -53,13 +65,13 @@ def build_cubic_spline(x, y):
         A[i] = -gamma[i] / m
         B[i] = (delta[i] - alpha[i] * B[i - 1]) / m
 
-
+    # Зворотна прогонка для знаходження коефіцієнтів c
     c = np.zeros(n + 1)
     c[n] = B[n]
     for i in range(n - 1, -1, -1):
         c[i] = A[i] * c[i + 1] + B[i]
 
-
+    # Обчислення інших коефіцієнтів сплайна
     a_coeffs = y[:-1]
     d_coeffs = np.diff(c) / (3 * h)
     b_coeffs = (np.diff(y) / h) - (h / 3) * (c[1:] + 2 * c[:-1])
@@ -67,17 +79,22 @@ def build_cubic_spline(x, y):
     return a_coeffs, b_coeffs, c[:-1], d_coeffs
 
 
+# ==========================================
+# ОСНОВНА ЧАСТИНА ПРОГРАМИ
+# ==========================================
 
 def main():
     results = get_elevation_data()
-    if not results: return
+    if not results:
+        return
 
-
+    # Підготовка даних
     lats = [p['latitude'] for p in results]
     lons = [p['longitude'] for p in results]
     elevs = [p['elevation'] for p in results]
 
-    dist = [0]
+    # Табуляція відстаней
+    dist = [0.0]
     for i in range(1, len(results)):
         d = haversine(lats[i - 1], lons[i - 1], lats[i], lons[i])
         dist.append(dist[-1] + d)
@@ -85,33 +102,37 @@ def main():
     x_nodes = np.array(dist)
     y_nodes = np.array(elevs)
 
-
+    # Побудова сплайна
     a, b, c, d = build_cubic_spline(x_nodes, y_nodes)
 
-
+    # Генерація гладкого графіка
     x_smooth = np.linspace(x_nodes[0], x_nodes[-1], 300)
     y_smooth = []
-    for xi in x_smooth:
 
+    for xi in x_smooth:
         idx = np.searchsorted(x_nodes, xi) - 1
         idx = max(0, min(idx, len(a) - 1))
         dx = xi - x_nodes[idx]
-
         val = a[idx] + b[idx] * dx + c[idx] * dx ** 2 + d[idx] * dx ** 3
         y_smooth.append(val)
 
-
-    print(f"Загальна відстань: {x_nodes[-1]:.2f} м")
+    # Додаткові обчислення
+    total_distance = x_nodes[-1]
     ascent = sum(max(y_nodes[i] - y_nodes[i - 1], 0) for i in range(1, len(y_nodes)))
+    energy_kj = (80 * 9.81 * ascent) / 1000
+
+    # Вивід результатів
+    print(f"Кількість вузлів: {len(results)}")
+    print(f"Загальна відстань: {total_distance:.2f} м")
     print(f"Сумарний підйом: {ascent:.2f} м")
-    print(f"Механічна робота (80кг): {80 * 9.81 * ascent / 1000:.2f} кДж")
+    print(f"Механічна робота (80 кг): {energy_kj:.2f} кДж")
 
-    # Візуалізація [cite: 138, 145]
-
+    # Візуалізація
     plt.figure(figsize=(10, 6))
     plt.plot(x_nodes, y_nodes, 'ro', label='GPS вузли (Табуляція)')
     plt.plot(x_smooth, y_smooth, 'b-', label='Кубічний сплайн (Гладкий профіль)')
     plt.fill_between(x_smooth, min(y_smooth) - 10, y_smooth, color='green', alpha=0.1)
+
     plt.title("Профіль висоти: Станція Заросляк - Гора Говерла")
     plt.xlabel("Кумулятивна відстань (метри)")
     plt.ylabel("Висота над рівнем моря (метри)")
