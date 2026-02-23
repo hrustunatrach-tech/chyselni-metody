@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # ==========================================
 
 def get_elevation_data():
-    """Отримання даних про висоту через Open-Elevation API [cite: 92, 100]"""
+    """Отримання даних про висоту через Open-Elevation API """
     locations = (
         "48.164214,24.536044|48.164983,24.534836|48.165605,24.534068|48.166228,24.532915|"
         "48.166777,24.531927|48.167326,24.530884|48.167011,24.530061|48.166053,24.528039|"
@@ -27,7 +27,7 @@ def get_elevation_data():
 
 
 def haversine(lat1, lon1, lat2, lon2):
-    """Обчислення відстані за формулою гаверсинуса [cite: 121, 129]"""
+    """Обчислення відстані за формулою гаверсинуса  """
     R = 6371000
     p1, p2 = np.radians(lat1), np.radians(lat2)
     dp, dl = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -40,7 +40,7 @@ def haversine(lat1, lon1, lat2, lon2):
 # ==========================================
 
 def solve_spline_coefficients(x, y):
-    """Знаходження коефіцієнтів методом прогонки [cite: 50, 53]"""
+    """Знаходження коефіцієнтів методом прогонки """
     n = len(x) - 1
     h = np.diff(x)
     alpha, beta, gamma, delta = np.zeros(n + 1), np.ones(n + 1), np.zeros(n + 1), np.zeros(n + 1)
@@ -68,7 +68,7 @@ def solve_spline_coefficients(x, y):
 
 
 def get_spline_value(x_nodes, coeffs, xi):
-    """Обчислення значення сплайна S(x) в точці xi [cite: 11]"""
+    """Обчислення значення сплайна S(x) в точці xi  """
     a, b, c, d = coeffs
     idx = np.searchsorted(x_nodes, xi) - 1
     idx = max(0, min(idx, len(a) - 1))
@@ -102,20 +102,20 @@ def main():
     for i, p in enumerate(results):
         print(f"{i:2d} | {p['latitude']:.6f} | {p['longitude']:.6f} | {p['elevation']:.2f}")
 
-    # 2. Табуляція відстань/висота [cite: 198]
+    # 2. Табуляція відстань/висота
     print("\nТабуляція (Відстань | Висота):")
     for i in range(len(x_ref)):
         print(f"{i:2d} | {x_ref[i]:10.2f} | {y_ref[i]:8.2f}")
 
-    # 3. Аналіз похибок [cite: 201-207]
+    # 3. Аналіз похибок
     test_counts = [10, 15, 20]
     x_smooth = np.linspace(x_ref[0], x_ref[-1], 500)
     y_ref_smooth = np.array([get_spline_value(x_ref, coeffs_ref, xi) for xi in x_smooth])
 
-    plt.figure(1, figsize=(10, 6))  # Графік профілів [cite: 209]
+    plt.figure(1, figsize=(10, 6))  # Графік профілів
     plt.plot(x_smooth, y_ref_smooth, label='21 вузол (еталон)', linewidth=2, color='tab:blue')
 
-    plt.figure(2, figsize=(10, 6))  # Графік похибок [cite: 233]
+    plt.figure(2, figsize=(10, 6))  # Графік похибок
 
     for count in test_counts:
         indices = np.linspace(0, len(results) - 1, count, dtype=int)
@@ -134,7 +134,7 @@ def main():
         plt.figure(2);
         plt.plot(x_smooth, errors, label=f'{count} вузлів')
 
-    # Оформлення [cite: 232]
+    # Оформлення
     plt.figure(1)
     plt.title("Вплив кількості вузлів");
     plt.legend();
