@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 # ==========================================
-# 1. ОТРИМАННЯ ДАНИХ (Пункт 1-2)
+# 1. ОТРИМАННЯ ДАНИХ
 # ==========================================
 
 def get_elevation_data():
@@ -27,7 +27,7 @@ def get_elevation_data():
 
 
 def haversine(lat1, lon1, lat2, lon2):
-    """Обчислення відстані за формулою гаверсинуса  """
+    """Обчислення відстані за формулою гаверсинуса """
     R = 6371000
     p1, p2 = np.radians(lat1), np.radians(lat2)
     dp, dl = np.radians(lat2 - lat1), np.radians(lon2 - lon1)
@@ -36,7 +36,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 # ==========================================
-# 2. МАТЕМАТИЧНИЙ АПАРАТ (Пункт 6-9)
+# 2. МАТЕМАТИЧНИЙ АПАРАТ
 # ==========================================
 
 def solve_spline_coefficients(x, y):
@@ -68,7 +68,7 @@ def solve_spline_coefficients(x, y):
 
 
 def get_spline_value(x_nodes, coeffs, xi):
-    """Обчислення значення сплайна S(x) в точці xi  """
+    """Обчислення значення сплайна S(x) в точці xi """
     a, b, c, d = coeffs
     idx = np.searchsorted(x_nodes, xi) - 1
     idx = max(0, min(idx, len(a) - 1))
@@ -77,14 +77,13 @@ def get_spline_value(x_nodes, coeffs, xi):
 
 
 # ==========================================
-# 3. ВИКОНАННЯ ТА ВІЗУАЛІЗАЦІЯ (Пункт 10-12)
+# 3. ВИКОНАННЯ ТА ВІЗУАЛІЗАЦІЯ
 # ==========================================
 
 def main():
     results = get_elevation_data()
     if not results: return
 
-    # Еталон (21 вузол)
     lats = [p['latitude'] for p in results]
     lons = [p['longitude'] for p in results]
     elevs = [p['elevation'] for p in results]
@@ -96,52 +95,60 @@ def main():
     x_ref, y_ref = np.array(dist), np.array(elevs)
     coeffs_ref = solve_spline_coefficients(x_ref, y_ref)
 
-    # 1. Табуляція вузлів [cite: 194, 196]
+    # 1. Вивід у консоль (як було раніше)
     print(f"Кількість вузлів: {len(results)}")
     print("\nТабуляція вузлів (Latitude | Longitude | Elevation):")
     for i, p in enumerate(results):
         print(f"{i:2d} | {p['latitude']:.6f} | {p['longitude']:.6f} | {p['elevation']:.2f}")
 
-    # 2. Табуляція відстань/висота
+    # 2. НОВИЙ БЛОК: Запис результату у файл (аналог вашого коду на C)
+    with open("output.txt", "w", encoding="utf-8") as finput:
+        finput.write("Index\tLatitude\tLongitude\tElevation\tDistance\n")
+        for i in range(len(results)):
+            line = f"{i}\t{lats[i]:.6f}\t{lons[i]:.6f}\t{elevs[i]:.2f}\t{dist[i]:.2f}\n"
+            finput.write(line)
+
+    print("\n[INFO] Дані також збережено у файл 'output.txt'")
+
+    # 3. Продовження вашого оригінального виводу
     print("\nТабуляція (Відстань | Висота):")
     for i in range(len(x_ref)):
         print(f"{i:2d} | {x_ref[i]:10.2f} | {y_ref[i]:8.2f}")
 
-    # 3. Аналіз похибок
-    test_counts = [10, 15, 20]
+    # Аналіз похибок та графіки
     x_smooth = np.linspace(x_ref[0], x_ref[-1], 500)
     y_ref_smooth = np.array([get_spline_value(x_ref, coeffs_ref, xi) for xi in x_smooth])
 
-    plt.figure(1, figsize=(10, 6))  # Графік профілів
+    plt.figure(1, figsize=(10, 6))
     plt.plot(x_smooth, y_ref_smooth, label='21 вузол (еталон)', linewidth=2, color='tab:blue')
 
-    plt.figure(2, figsize=(10, 6))  # Графік похибок
+    plt.figure(2, figsize=(10, 6))
 
+    test_counts = [10, 15, 20]
     for count in test_counts:
         indices = np.linspace(0, len(results) - 1, count, dtype=int)
         x_n, y_n = x_ref[indices], y_ref[indices]
-        coeffs = solve_spline_coefficients(x_n, y_n)
 
+        coeffs = solve_spline_coefficients(x_n, y_n)
         y_s = np.array([get_spline_value(x_n, coeffs, xi) for xi in x_smooth])
         errors = np.abs(y_s - y_ref_smooth)
 
-        print(f"\n{count} вузлів")
-        print(f"Максимальна похибка: {np.max(errors)}")
-        print(f"Середня похибка: {np.mean(errors)}")
+        print(f"\nАналіз для {count} вузлів:")
+        print(f"Максимальна похибка: {np.max(errors):.4f}")
+        print(f"Середня похибка: {np.mean(errors):.4f}")
 
-        plt.figure(1);
+        plt.figure(1)
         plt.plot(x_smooth, y_s, label=f'{count} вузлів')
-        plt.figure(2);
+        plt.figure(2)
         plt.plot(x_smooth, errors, label=f'{count} вузлів')
 
-    # Оформлення
     plt.figure(1)
-    plt.title("Вплив кількості вузлів");
+    plt.title("Вплив кількості вузлів")
     plt.legend();
     plt.grid(True)
 
     plt.figure(2)
-    plt.title("Похибка апроксимації");
+    plt.title("Похибка апроксимації")
     plt.legend();
     plt.grid(True)
 
