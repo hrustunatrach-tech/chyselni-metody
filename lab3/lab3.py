@@ -7,7 +7,7 @@ import os
 # --- 1. ПІДГОТОВКА ДАНИХ (Пункт 1) ---
 def prepare_data(filename):
     """Створює файл з даними про температуру (табуляція)"""
-    # Дані з методички [cite: 101-124]
+    # Дані з методички
     months = np.arange(1, 25)
     temps = np.array([-2, 0, 5, 10, 15, 20, 23, 22, 17, 10, 5, 0,
                       -10, 3, 7, 13, 19, 20, 22, 21, 18, 15, 10, 3])
@@ -66,7 +66,7 @@ def gauss_solve(B, C):
 
 
 def poly_val(x, coeffs):
-    """Обчислення многочлена [cite: 7]"""
+    """Обчислення многочлена """
     res = np.zeros_like(x, dtype=float)
     for i, a in enumerate(coeffs):
         res += a * (x ** i)
@@ -88,7 +88,7 @@ for m in range(1, 11):
     B, C = form_arrays(x_data, f_data, m)
     coeffs = gauss_solve(B, C)
     f_approx = poly_val(x_data, coeffs)
-    # Обчислення дисперсії [cite: 30]
+    # Обчислення дисперсії
     delta = np.sqrt(np.mean((f_data - f_approx) ** 2))
     variances.append(delta)
     coeffs_storage.append(coeffs)

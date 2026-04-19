@@ -5,7 +5,7 @@ import csv
 import os
 from scipy.interpolate import CubicSpline
 
-# 1. Вхідні дані Варіанту 3 [cite: 247-248, 250]
+# 1. Вхідні дані Варіанту 3
 x_nodes = np.array([10000, 20000, 40000, 80000, 160000], dtype=float)
 y_nodes = np.array([8, 20, 55, 150, 420], dtype=float)
 target_x = 120000
@@ -14,20 +14,20 @@ target_x = 120000
 true_func = CubicSpline(x_nodes, y_nodes)
 
 
-# 2. Функції обчислень [cite: 7, 10, 12, 55]
+# 2. Функції обчислень
 def get_divided_diff_table(x, y):
     n = len(y)
     table = np.zeros([n, n])
-    table[:, 0] = y  # Розділена різниця 0-го порядку [cite: 6, 13]
+    table[:, 0] = y  # Розділена різниця 0-го порядку
     for j in range(1, n):
         for i in range(n - j):
-            # Рекурентна формула розділених різниць [cite: 10, 12, 15]
+            # Рекурентна формула розділених різниць
             table[i][j] = (table[i + 1][j - 1] - table[i][j - 1]) / (x[i + j] - x[i])
     return table
 
 
 def newton_poly(x_n, coef, x_v):
-    # Обчислення значення многочлена Ньютона [cite: 54, 55, 159]
+    # Обчислення значення многочлена
     res = coef[0]
     product = 1.0
     for k in range(1, len(coef)):
@@ -37,7 +37,7 @@ def newton_poly(x_n, coef, x_v):
 
 
 def factorial_interp(y_n, x_n, x_v):
-    # Обчислення через факторіальні многочлени [cite: 133, 149, 150]
+    # Обчислення через факторіальні многочлени
     h = x_n[1] - x_n[0]
     t = (x_v - x_n[0]) / h
     n = len(y_n)
